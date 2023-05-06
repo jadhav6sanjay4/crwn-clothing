@@ -30,6 +30,16 @@ export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
 //create DB in Firebase
 export const db = getFirestore();
 export const createUserDocumentFromAuth = async (userAuth) => {
-    const userDocRef = doc(db, 'users', userAuth.uid);
-    console.log(userDocRef);
+    const userDocRef = doc(db, 'users', userAuth.user.uid);
+    const userSnapShot = await getDoc(userDocRef);
+    if (!userSnapShot.exists()) {
+        const { displayName, email } = userAuth.user;
+        const createdDate = new Date();
+        try {
+            await setDoc(userDocRef, { displayName, email, createdDate });
+        } catch (error) {
+            console.log("Error while creating user DOC :", error.message);
+        }
+
+    }
 };
