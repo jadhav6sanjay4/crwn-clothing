@@ -1,8 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithRedirect, signInWithPopup, GoogleAuthProvider, createAuthUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword } from 'firebase/auth';
 import { getDoc, setDoc, doc, getFirestore } from 'firebase/firestore';
-import firebase from "firebase/compat/app";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -18,25 +17,28 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const firerbaseApp = initializeApp(firebaseConfig);
-const provider = new GoogleAuthProvider();
+const googleProvider = new GoogleAuthProvider();
 
-provider.setCustomParameters({
+googleProvider.setCustomParameters({
     prompt: "select_account"
 });
 
 export const auth = getAuth(firerbaseApp);
-export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
+export const signInWithGooglePopup = () => signInWithPopup(auth, googleProvider);
 
 //create DB in Firebase
 export const db = getFirestore();
-export const createUserDocumentFromAuth = async (userAuth) => {
-    const userDocRef = doc(db, 'users', userAuth.user.uid);
+export const createUserDocumentFromAuth = async (userAuth, additionalInformation = {}) => {
+    //Authentication
+    if (!userAuth) return;//If we dont get user auth return
+
+    const userDocRef = doc(db, 'users', userAuth.uid);
     const userSnapShot = await getDoc(userDocRef);
     if (!userSnapShot.exists()) {
-        const { displayName, email } = userAuth.user;
+        const { displayName, email } = userAuth;
         const createdDate = new Date();
         try {
-            await setDoc(userDocRef, { displayName, email, createdDate });
+            await setDoc(userDocRef, { displayName, email, createdDate, ...additionalInformation });
         } catch (error) {
             console.log("Error while creating user DOC :", error.message);
         }
@@ -44,7 +46,8 @@ export const createUserDocumentFromAuth = async (userAuth) => {
     }
     return userDocRef;
 };
-export const createAuthUserWithEmailAndPassword = async (email, password) => {
+export const createAuthUserWithEmailAndPasswordd = async (email, password) => {
+    console.log("EMAIL:=>" + email + "PASSWORD:=>" + password + "AUTH:=>" + auth);
     if (!email || !password) return;
-    return await createAuthUserWithEmailAndPassword(auth, email, password);
+    return await createUserWithEmailAndPassword(auth, email, password);
 };
